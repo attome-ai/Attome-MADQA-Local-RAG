@@ -375,3 +375,7 @@ visual search.
 - Purpose: tell whether the reader is the cause of the remaining misses. Not a score; the local-only rule stands.
 - Result: 1 of 11 right (dev/98, the two-document question). Wrong: dev/15, 18, 23, 36, 44, 56, 74, 96, 112, 119. Same shape as Qwen: dev/18 still 3 of 4 authors, dev/56 4 of 9 names, dev/15 3 of 5 years, dev/74 2 of 3 people, dev/96 one date.
 - Reading: a different, stronger-family model fails the same questions with the same pages, so most of the remaining misses are not a reader-strength problem. They are pages not shown, list completeness over many pages, or label ambiguity.
+
+## 2026-11-09 Ranker: widen candidates to every page of the top 2 documents
+- Out-of-fold train: multi 197 -> 198 of 237, single 1294 -> 1290 of 1313; dev multi 32 -> 31 of 37. The extra candidates add noise about as often as they add gold pages. Not adopted (WIDEN = 0 in lab/pagerank.py).
+- Where the v2 ranker still misses on train (multi, 40 of 237): 27 have every gold page in the candidate lists but not in the chosen 9; 13 have a gold page in no list (11 of those with the right document seen).

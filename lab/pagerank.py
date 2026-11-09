@@ -18,6 +18,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.model_selection import GroupKFold
 
 DATA = Path("data")
+WIDEN = 0  # documents whose every page is a candidate (0 = off)
 
 
 def load(split: str):
@@ -76,6 +77,16 @@ def overlap(question: str, page: tuple) -> tuple[float, float]:
 
 def features(tr: list, vr: list, question: str = ""):
     pages = list(dict.fromkeys(tr + vr))
+    if WIDEN:
+        # Every page of the best documents becomes a candidate: a gold page the rankings missed often sits in a
+        # document they ranked high (11 of 13 such train misses).
+        docs = []
+        for p in tr[:5] + vr[:3]:
+            if p[0] not in docs:
+                docs.append(p[0])
+        text, _ = corpus()
+        extra = [p for p in text if p[0] in docs[:WIDEN] and p not in set(pages)]
+        pages += extra[:300]
     trank = {p: i for i, p in enumerate(tr)}
     vrank = {p: i for i, p in enumerate(vr)}
     best_t, best_v, top20 = defaultdict(lambda: 200), defaultdict(lambda: 100), defaultdict(int)
