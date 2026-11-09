@@ -370,3 +370,8 @@ visual search.
 - The 1,458 train questions whose 9 pages differ but gold coverage is the same were neutral in the plain-read sample (+4/-3 of 150).
 - Expected gain: about +7 net per 52 coverage-changed questions, i.e. roughly +0.5 point over the full question set. Kept: holds on untuned train.
 - Not yet wired for test: the ranker needs the text and ColQwen rankings for the test split (lab.pagerank exports dev and train only). Nothing run on test.
+
+## 2026-11-09 Diagnostic: Claude Haiku 5.5 as reader on the 11 dev misses (same 9 pages, same v3 prompt, API model, not a pipeline change)
+- Purpose: tell whether the reader is the cause of the remaining misses. Not a score; the local-only rule stands.
+- Result: 1 of 11 right (dev/98, the two-document question). Wrong: dev/15, 18, 23, 36, 44, 56, 74, 96, 112, 119. Same shape as Qwen: dev/18 still 3 of 4 authors, dev/56 4 of 9 names, dev/15 3 of 5 years, dev/74 2 of 3 people, dev/96 one date.
+- Reading: a different, stronger-family model fails the same questions with the same pages, so most of the remaining misses are not a reader-strength problem. They are pages not shown, list completeness over many pages, or label ambiguity.

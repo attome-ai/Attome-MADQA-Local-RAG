@@ -35,7 +35,46 @@ def load(split: str):
     return qs, text, vis
 
 
-def features(tr: list, vr: list):
+STOP = set("the of and for with what which who whom where when how many much does did are was were has have had that this from into than then there their its is in on at by to a an as be or not".split())
+_TEXT: dict = {}
+_IDF: dict = {}
+
+
+def corpus():
+    """Page text and word IDF, loaded once."""
+    if not _TEXT:
+        import math
+        import re
+
+        from .hybrid import load_text
+
+        config = json.loads(Path("experiments/thin_ocr_visual.json").read_text(encoding="utf-8"))
+        text = load_text(DATA / "pages" / f"{config['pages']}.jsonl")
+        df: dict = defaultdict(int)
+        for page, body in text.items():
+            words = set(re.findall(r"[a-z0-9]+", body.lower()))
+            _TEXT[page] = words
+            for w in words:
+                df[w] += 1
+        n = len(text)
+        _IDF.update({w: math.log((n + 1) / (c + 1)) for w, c in df.items()})
+    return _TEXT, _IDF
+
+
+def overlap(question: str, page: tuple) -> tuple[float, float]:
+    import re
+
+    text, idf = corpus()
+    words = {w for w in re.findall(r"[a-z0-9]+", question.lower()) if w not in STOP and len(w) > 2}
+    if not words:
+        return 0.0, 0.0
+    have = text.get(page, set())
+    total = sum(idf.get(w, 8.0) for w in words)
+    hit = sum(idf.get(w, 8.0) for w in words if w in have)
+    return hit / total, hit
+
+
+def features(tr: list, vr: list, question: str = ""):
     pages = list(dict.fromkeys(tr + vr))
     trank = {p: i for i, p in enumerate(tr)}
     vrank = {p: i for i, p in enumerate(vr)}
@@ -47,6 +86,11 @@ def features(tr: list, vr: list):
         best_v[p[0]] = min(best_v[p[0]], i)
     top_t, top_v = tr[0], vr[0] if vr else tr[0]
     rows = []
+    lex = {p: overlap(question, p) for p in pages}
+    doc_lex = defaultdict(float)
+    for p, (frac, _) in lex.items():
+        doc_lex[p[0]] = max(doc_lex[p[0]], frac)
+    top_frac = max([f for f, _ in lex.values()] or [0.0])
     for p in pages:
         t, v = trank.get(p, 150), vrank.get(p, 75)
         same_t = p[0] == top_t[0]
@@ -55,6 +99,7 @@ def features(tr: list, vr: list):
             same_t, p[0] == top_v[0], abs(p[1] - top_t[1]) if same_t else 99,
             min([abs(p[1] - q[1]) for q in tr[:3] if q[0] == p[0]] or [99]),
             min([abs(p[1] - q[1]) for q in vr[:3] if q[0] == p[0]] or [99]), p[1],
+            lex[p][0], lex[p][1], lex[p][0] - top_frac, doc_lex[p[0]],
         ])
     return pages, np.array(rows, dtype=float)
 
@@ -66,7 +111,7 @@ def build(split: str):
         if q["id"] not in text or not q.get("evidence"):
             continue
         gold = {(e["document"], int(e["page"])) for e in q["evidence"]}
-        pages, x = features(text[q["id"]], vis.get(q["id"], []))
+        pages, x = features(text[q["id"]], vis.get(q["id"], []), q["question"])
         out.append((q["id"], gold, text[q["id"]], pages, x, np.array([p in gold for p in pages])))
     return out
 
