@@ -363,3 +363,10 @@ visual search.
 - Read only (rules v3, no later steps), dev: 183 -> 184 (+4/-3).
 - Read only, train, 207 questions (57 whose gold coverage changed + 150 random of the 1458 whose 9 differ but coverage is the same): 168 -> 185 (+24/-7). Coverage-changed group +20/-4; same-coverage sample +4/-3 (noise).
 - Status: promising; needs the full pipeline (verify, workspace, agent, adjudicate, units) before adopting. experiments/thin_ocr_ranker.json, runs ranker_dev / ranker_train.
+
+## 2026-11-09 Learned page ranker, full pipeline (read, verify, workspace, adjudicate, units; agent answers shared)
+- Dev, 9 questions where the ranker changes gold coverage of the 9 pages: right 3 -> 4 (gained dev/74, lost none). Dev would be 190/200.
+- Untuned train, 52 questions where the ranker changes gold coverage (out-of-fold ranker scores): right 34 -> 41 (+11 / -4). Gained train/337, 414, 969, 1219, 1223, 1324, 1335, 1373, 1374, 1419, 1523; lost train/499, 656, 670, 726.
+- The 1,458 train questions whose 9 pages differ but gold coverage is the same were neutral in the plain-read sample (+4/-3 of 150).
+- Expected gain: about +7 net per 52 coverage-changed questions, i.e. roughly +0.5 point over the full question set. Kept: holds on untuned train.
+- Not yet wired for test: the ranker needs the text and ColQwen rankings for the test split (lab.pagerank exports dev and train only). Nothing run on test.

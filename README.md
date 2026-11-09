@@ -63,7 +63,7 @@ Each idea was kept only if it held up on untuned train questions, not only on de
 | Lists that span many pages | The reader cannot tell a complete list from a partial one |
 | Ambiguous or noisy gold labels | A few dev questions |
 
-## In progress: learned page ranker
+## Learned page ranker
 
 A gradient-boosted ranker (`lab/pagerank.py`) chooses the reader's 9 pages from the text rank, ColQwen rank and
 document context, trained on the gold pages of train with out-of-fold scores.
@@ -74,7 +74,7 @@ document context, trained on the gold pages of train with out-of-fold scores.
 | Train single-page, all gold pages shown (5-fold) | 1282 / 1313 | 1297 / 1313 |
 | Plain read on 207 untuned train questions | 168 right | 185 right (+24 / -7) |
 
-The full pipeline with the ranker is still being validated before it is adopted.
+Full pipeline (read, verify, workspace, adjudicate, units), only on questions where the ranker changes which gold pages are shown: dev 3 to 4 right of 9 (+1 / -0); untuned train 34 to 41 right of 52 (+11 / -4). Worth about +0.5 point overall, so it is kept. It is not yet exported for the test split.
 
 ## Layout
 
