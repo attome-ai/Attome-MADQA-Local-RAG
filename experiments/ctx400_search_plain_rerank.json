@@ -1,0 +1,10 @@
+{
+  "name": "ctx400_search_plain_rerank",
+  "hypothesis": "Searching enriched text finds more pages, while reranking the original text avoids the shared opening blurring page differences.",
+  "pages": "hybrid_rapidocr_ctx400",
+  "pipeline": [
+    {"stage": "bm25", "top_k": 100},
+    {"stage": "rerank", "top_n": 100, "batch_size": 8, "max_tokens": 1500, "text_from": "hybrid_rapidocr"}
+  ],
+  "eval_k": [1, 3, 5, 10, 20]
+}

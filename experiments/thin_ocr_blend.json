@@ -1,0 +1,13 @@
+{
+  "name": "thin_ocr_blend",
+  "hypothesis": "Blending plain BM25 back into the LLM-selected ranking keeps good hits that later stages bury, moving more evidence into the top 3.",
+  "pages": "hybrid_t200_ctx400",
+  "pipeline": [
+    {"stage": "bm25", "top_k": 100},
+    {"stage": "rerank", "top_n": 100, "batch_size": 8, "max_tokens": 1500, "text_from": "hybrid_t200"},
+    {"stage": "llm_select", "top_n": 20, "chars": 1200, "text_from": "hybrid_t200"},
+    {"stage": "blend_bm25", "top_k": 100, "c": 10, "weight": 2.0},
+    {"stage": "neighbors", "seeds": 3, "window": 1}
+  ],
+  "eval_k": [1, 3, 5, 9, 10, 20]
+}

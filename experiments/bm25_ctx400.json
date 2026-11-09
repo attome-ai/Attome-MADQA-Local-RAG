@@ -1,0 +1,7 @@
+{
+  "name": "bm25_ctx400",
+  "hypothesis": "Adding each document's opening 400 characters to its pages lets BM25 reach pages that omit the document's name.",
+  "pages": "hybrid_rapidocr_ctx400",
+  "pipeline": [{"stage": "bm25", "top_k": 100}],
+  "eval_k": [1, 3, 5, 10, 20]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "ctx400_rerank100",
+  "hypothesis": "Page context helps the reranker as well as BM25, moving evidence into the top 5.",
+  "pages": "hybrid_rapidocr_ctx400",
+  "pipeline": [
+    {"stage": "bm25", "top_k": 100},
+    {"stage": "rerank", "top_n": 100, "batch_size": 8, "max_tokens": 1500}
+  ],
+  "eval_k": [1, 3, 5, 10, 20]
+}

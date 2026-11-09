@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MADQA experiment map</title>
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--ink:#22252a;--muted:#5d636c;--line:#dcdad3;--accent:#1f5f8b;
+--new-bg:#fdeed2;--new-line:#b9771a;--old-bg:#eceef1;--old-line:#a5abb4;--end-bg:#dcefe3;--end-line:#2f7d51;--code:#efede7}
+@media (prefers-color-scheme:dark){:root{--bg:#16181c;--card:#1f2228;--ink:#e8e8e6;--muted:#a6abb3;--line:#363a42;--accent:#7cb8e4;
+--new-bg:#46351a;--new-line:#e0a64e;--old-bg:#2b2f36;--old-line:#6c727c;--end-bg:#1d3a2a;--end-line:#59b583;--code:#2b2f36}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1000px;margin:auto;padding:32px 20px 72px}
+h1{font-size:2rem;line-height:1.2;margin:0 0 8px}
+h2{font-size:1.4rem;margin:48px 0 8px;padding-top:8px}
+h3{font-size:1.12rem;margin:0}
+p{margin:0 0 12px}
+a{color:var(--accent)}
+code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.88em;overflow-wrap:anywhere}
+.lead{color:var(--muted);font-size:1.06rem;max-width:760px}
+nav{display:flex;flex-wrap:wrap;gap:6px 16px;margin:18px 0 0;padding:12px 0;border-block:1px solid var(--line);font-size:.93rem}
+.note{border-left:4px solid var(--new-line);background:var(--card);padding:12px 16px;margin:16px 0;border-radius:0 6px 6px 0}
+.note p:last-child{margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:20px;margin:16px 0}
+.head{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.tag{font-size:.78rem;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:1px 10px;color:var(--muted);white-space:nowrap}
+.tag.ready{color:var(--end-line);border-color:var(--end-line)}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin:14px 0}
+.step{flex:0 1 auto;min-width:92px;max-width:190px;padding:7px 10px;border:1px solid var(--old-line);background:var(--old-bg);border-radius:6px;font-size:.86rem;line-height:1.3}
+.step b{display:block}
+.step.new{background:var(--new-bg);border:2px solid var(--new-line)}
+.step.end{background:var(--end-bg);border-color:var(--end-line)}
+.arrow{align-self:center;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.86rem}
+.legend .step{min-width:0}
+dl{display:grid;grid-template-columns:120px 1fr;gap:5px 14px;margin:0;font-size:.95rem}
+dt{color:var(--muted);font-weight:600}dd{margin:0}
+.scroll{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:8px;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{white-space:nowrap}tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:600px){dl{grid-template-columns:1fr}dt{margin-top:6px}.step{max-width:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>MADQA experiment map</h1>
+<p class="lead">Every experiment we plan on the way to an open-weight agentic RAG for the MADQA leaderboard: what each one tests, how it is wired, which models it uses, and what result decides its fate.</p>
+<nav aria-label="Sections">
+<a href="#status">Status</a><a href="#goal">The goal</a><a href="#target">Target design</a><a href="#experiments">Experiments</a><a href="#models">Models</a><a href="#terms">Terms</a>
+</nav>
+
+<section id="status">
+<h2>Where things stand</h2>
+<div class="note">
+<p><strong>No experiment has run on MADQA yet.</strong> The lab code passes its tests on a tiny made-up corpus. Running on real data needs your Hugging Face login. Nothing here is a result of ours, and the model lists are candidates that the tests will narrow down.</p>
+</div>
+</section>
+
+<section id="goal">
+<h2>The goal</h2>
+<p>MADQA has 2,250 human-written questions over 800 PDFs: 1,550 train, 200 dev, and 500 hidden test questions. The leaderboard ranks by LLM-judged accuracy on the test set.</p>
+<div class="scroll"><table>
+<thead><tr><th>System</th><th class="n">Accuracy</th><th class="n">ANLS</th><th class="n">Page F1</th><th class="n">Kuiper</th><th class="n">Single</th><th class="n">Cross-page</th><th class="n">Cross-doc</th></tr></thead>
+<tbody>
+<tr><td>Human with oracle retriever</td><td class="n">99.4</td><td class="n">93.7</td><td class="n">88.6</td><td class="n">4.6</td><td class="n">99.2</td><td class="n">100.0</td><td class="n">98.0</td></tr>
+<tr><td>Best human with BM25</td><td class="n">82.2</td><td class="n">82.8</td><td class="n">78.8</td><td class="n">8.9</td><td class="n">84.6</td><td class="n">78.4</td><td class="n">72.0</td></tr>
+<tr><td>Gemini 3 Pro with BM25</td><td class="n">82.2</td><td class="n">74.8</td><td class="n">78.5</td><td class="n">25.8</td><td class="n">87.0</td><td class="n">66.8</td><td class="n">73.0</td></tr>
+<tr><td>GLM-4.6V with BM25 (open-weight)</td><td class="n">66.1</td><td class="n">60.3</td><td class="n">65.9</td><td class="n">51.4</td><td class="n">72.3</td><td class="n">37.1</td><td class="n">70.0</td></tr>
+</tbody></table></div>
+<p>The last three columns are accuracy by question type. The test set has 365 single-page, 84 cross-page and 51 cross-document questions.</p>
+<div class="note"><p><strong>This table is incomplete.</strong> It comes from the 14 result files I could read, out of about 40 listed, and the live leaderboard would not load. Progress claims #1 but publishes no score, so the real number to beat is still unknown.</p></div>
+</section>
+
+<section id="target">
+<h2>The design we expect to end up with</h2>
+<p>This is the starting hypothesis, not a commitment. Any stage that does not earn its cost in the experiments below gets removed.</p>
+<div class="card">
+<div class="flow" role="img" aria-label="Question goes through seed, judge, expand, visual rerank, read, verify, and finalize stages to produce an answer with citations">
+<div class="step"><b>Question</b></div><span class="arrow" aria-hidden="true">→</span>
+<div class="step"><b>Seed</b>BM25 + visual, about 100 pages</div><span class="arrow" aria-hidden="true">→</span>
+<div class="step"><b>Judge</b>Local reranker scores evidence</div><span class="arrow" aria-hidden="true">→</span>
+<div class="step"><b>Expand</b>Only if incomplete, max 2 rounds</div><span class="arrow" aria-hidden="true">→</span>
+<div class="step"><b>Visual rerank</b>Top 20 down to 3–5</div><span class="arrow" aria-hidden="true">→</span>
+<div class="step"><b>Read</b>Vision model: images + OCR</div><span class="arrow" aria-hidden="true">→</span>
+<div class="step"><b>Verify</b>Second read if unsure</div><span class="arrow" aria-hidden="true">→</span>
+<div class="step"><b>Finalize</b>Short answer, cited pages</div><span class="arrow" aria-hidden="true">→</span>
+<div class="step end"><b>Submission</b>One JSONL row per question</div>
+</div>
+<p>Cheap stages run first and narrow the pages, so the expensive vision model only sees a handful.</p>
+</div>
+</section>
+
+<section id="experiments">
+<h2>The experiments, in order</h2>
+<p>Each one changes as little as possible, so we can tell what caused any gain. Cheap tests that could change the plan come first.</p>
+<div class="legend">
+<div class="step new"><b>Orange</b>New in this experiment</div>
+<div class="step"><b>Grey</b>Carried over</div>
+<div class="step end"><b>Green</b>What we measure</div>
+</div>
+
+<article class="card">
+<div class="head"><h3>1. PDF text check</h3><span class="tag ready">Code ready, needs login</span></div>
+<p>Before trusting any score, is the data what we assume it is?</p>
+<div class="flow"><div class="step new"><b>800 PDFs</b>Download</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Embedded text</b>Page by page</div><span class="arrow" aria-hidden="true">→</span><div class="step end"><b>Data report</b>Empty pages, page numbering</div></div>
+<dl><dt>Models</dt><dd>None. Uses <code>pypdfium2</code> for text extraction.</dd>
+<dt>Measures</dt><dd>Share of near-empty pages, unreadable PDFs, and whether answers appear on the labelled page.</dd>
+<dt>Decides</dt><dd>Many empty pages moves OCR up in priority. A numbering mismatch gets fixed before anything else runs.</dd></dl>
+</article>
+
+<article class="card">
+<div class="head"><h3>2a. BM25 baseline</h3><span class="tag ready">Code ready, needs login</span></div>
+<p>How far does plain keyword search get? Everything later is compared with this.</p>
+<div class="flow"><div class="step"><b>Question</b></div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>BM25</b>SQLite FTS5, top 100 pages</div><span class="arrow" aria-hidden="true">→</span><div class="step end"><b>Page recall</b>At 1, 3, 5, 10, 20</div></div>
+<dl><dt>Models</dt><dd>None.</dd><dt>Measures</dt><dd>Page recall, all-evidence recall and document recall, split by question type.</dd><dt>Decides</dt><dd>Sets the baseline, and shows how many pages later stages must consider.</dd></dl>
+</article>
+
+<article class="card">
+<div class="head"><h3>2b. BM25 + neighbouring pages</h3><span class="tag ready">Code ready, needs login</span></div>
+<p>Evidence often continues on the next page. Does adding adjacent pages help cross-page questions?</p>
+<div class="flow"><div class="step"><b>Question</b></div><span class="arrow" aria-hidden="true">→</span><div class="step"><b>BM25</b>Top 100 pages</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Neighbours</b>Pages beside top 3 hits</div><span class="arrow" aria-hidden="true">→</span><div class="step end"><b>Page recall</b>Compare with 2a</div></div>
+<dl><dt>Models</dt><dd>None.</dd><dt>Measures</dt><dd>Change in cross-page recall against any loss on single-page questions.</dd><dt>Decides</dt><dd>Keep if the cross-page gain outweighs the single-page loss, weighted by how common each type is.</dd></dl>
+</article>
+
+<article class="card">
+<div class="head"><h3>3. OCR vs embedded text</h3><span class="tag">Planned</span></div>
+<p>Scanned pages have no embedded text. Which text source helps retrieval most for its cost?</p>
+<div class="flow"><div class="step new"><b>Page images</b>Rendered from PDFs</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Open OCR</b>Several candidates</div><span class="arrow" aria-hidden="true">→</span><div class="step"><b>BM25</b>Top 100 pages</div><span class="arrow" aria-hidden="true">→</span><div class="step end"><b>Page recall</b>Plus hours to process</div></div>
+<dl><dt>Models</dt><dd>Candidates to verify: Docling, PaddleOCR, olmOCR. A hybrid option uses OCR only on pages with no text.</dd><dt>Measures</dt><dd>Recall per OCR option, processing time, and text accuracy on a hand-checked sample of pages.</dd><dt>Decides</dt><dd>Which text becomes the default for every later experiment.</dd></dl>
+</article>
+
+<article class="card">
+<div class="head"><h3>4. Reader bake-off</h3><span class="tag">Planned · most important test</span></div>
+<p>Given the correct pages, how accurately can an open vision model answer? This is the highest score the open-weight route can reach.</p>
+<div class="flow"><div class="step new"><b>Gold pages</b>Known correct, no search</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Vision reader</b>Images, or images + OCR</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Finalizer</b>Short exact answer</div><span class="arrow" aria-hidden="true">→</span><div class="step end"><b>Accuracy + ANLS</b>By question type</div></div>
+<dl><dt>Models</dt><dd>Candidates: Qwen3-VL, GLM-4.6V, and newer open vision models that fit in 32 GB.</dd><dt>Measures</dt><dd>Accuracy, ANLS and seconds per question. A human with the right pages scores 99.4, so that is the reference.</dd><dt>Decides</dt><dd>The reader for all later runs. If the best open reader falls well short, we decide whether to stay open-weight or accept an API reader.</dd></dl>
+</article>
+
+<article class="card">
+<div class="head"><h3>5a. Add the local judge</h3><span class="tag">Planned</span></div>
+<p>SAG2's closed JEV judge has to be replaced. Can an open reranker pick out the necessary pages?</p>
+<div class="flow"><div class="step"><b>Question</b></div><span class="arrow" aria-hidden="true">→</span><div class="step"><b>BM25</b>Top 100 pages</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Judge</b>Scores each page</div><span class="arrow" aria-hidden="true">→</span><div class="step end"><b>Page recall</b>Especially at 5 and 10</div></div>
+<dl><dt>Models</dt><dd><code>Qwen3-Reranker-0.6B</code> first. A small open LLM is the fallback if it misses too much evidence.</dd><dt>Measures</dt><dd>Recall gain over the baseline and GPU time per question.</dd><dt>Decides</dt><dd>Whether the judge is good enough to support SAG2-style expansion.</dd></dl>
+</article>
+
+<article class="card">
+<div class="head"><h3>5b. Add SAG2 expansion</h3><span class="tag">Planned</span></div>
+<p>Take terms from the best pages and search again. It worked on Wikipedia-style text, raising MuSiQue recall@10 from 67.93 to 86.62. Does it carry over to PDFs?</p>
+<div class="flow"><div class="step"><b>BM25</b>Top 100 pages</div><span class="arrow" aria-hidden="true">→</span><div class="step"><b>Judge</b>Scores each page</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Expand</b>0, 1 or 2 rounds</div><span class="arrow" aria-hidden="true">→</span><div class="step"><b>Judge</b>Re-score, new pages</div><span class="arrow" aria-hidden="true">→</span><div class="step end"><b>Page recall</b>By number of rounds</div></div>
+<dl><dt>Models</dt><dd>Same judge as 5a. The expansion method comes from SAG2's MIT-licensed code.</dd><dt>Measures</dt><dd>Cross-page and cross-document recall per round, and judge calls per question.</dd><dt>Decides</dt><dd>How many rounds to allow, possibly none.</dd></dl>
+</article>
+
+<article class="card">
+<div class="head"><h3>6a. Add visual search</h3><span class="tag">Planned</span></div>
+<p>Charts, tables and scans can defeat keyword search. Does searching by page appearance find what BM25 misses?</p>
+<div class="flow"><div class="step"><b>BM25</b>Keyword seed</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Visual seed</b>Single vector per page</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Fuse</b>Merge by rank</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Visual rerank</b>Finalists only</div><span class="arrow" aria-hidden="true">→</span><div class="step end"><b>Page recall</b>Plus index size</div></div>
+<dl><dt>Models</dt><dd><code>MrLight/dse-qwen2-2b-mrl-v1</code> for seeding and <code>vidore/colqwen2.5-v0.2</code> for reranking, both from MADQA's HEAVEN baseline.</dd><dt>Measures</dt><dd>Questions rescued that BM25 missed, plus indexing time and storage.</dd><dt>Decides</dt><dd>Keep seeding, reranking, both or neither.</dd></dl>
+</article>
+
+<article class="card">
+<div class="head"><h3>6b. Add learned sparse search</h3><span class="tag">Planned</span></div>
+<p>A third seed that matches related wording. Does it add anything once BM25 and visual search are both running?</p>
+<div class="flow"><div class="step"><b>BM25 + visual</b>Current seeds</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Learned sparse</b>Third seed</div><span class="arrow" aria-hidden="true">→</span><div class="step"><b>Fuse</b>Merge by rank</div><span class="arrow" aria-hidden="true">→</span><div class="step end"><b>Page recall</b>Gain vs added cost</div></div>
+<dl><dt>Models</dt><dd>A SPLADE-style model. The licence needs checking, as some weights may be non-commercial.</dd><dt>Measures</dt><dd>Extra questions rescued, and added indexing and query time.</dd><dt>Decides</dt><dd>Keep only for a clear gain. Otherwise it stays out, which keeps the system simpler.</dd></dl>
+</article>
+
+<article class="card">
+<div class="head"><h3>7. The full agent</h3><span class="tag">Planned</span></div>
+<p>Connect the winners end to end, and let the agent decide when it has enough evidence and when to search again.</p>
+<div class="flow"><div class="step"><b>Best retrieval</b>From 2–6</div><span class="arrow" aria-hidden="true">→</span><div class="step"><b>Best reader</b>From 4</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Enough evidence?</b>Else one targeted search</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Verify</b>Second read if unsure</div><span class="arrow" aria-hidden="true">→</span><div class="step"><b>Finalizer</b>Cited pages only</div><span class="arrow" aria-hidden="true">→</span><div class="step end"><b>All metrics</b>Accuracy, Page F1, Kuiper</div></div>
+<dl><dt>Models</dt><dd>The winners so far. A stronger or second reader for the verify step is optional.</dd><dt>Measures</dt><dd>The full leaderboard metrics on train and dev, plus real iterations and time per question.</dd><dt>Decides</dt><dd>Which stages stay. We remove each in turn, and anything that does not help goes.</dd></dl>
+</article>
+
+<article class="card">
+<div class="head"><h3>8. Submission</h3><span class="tag">Needs your approval</span></div>
+<p>A final frozen run on the hidden test questions, only once validation clears the bar.</p>
+<div class="flow"><div class="step"><b>Frozen system</b>No more tuning</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>500 test questions</b>Answers hidden</div><span class="arrow" aria-hidden="true">→</span><div class="step new"><b>Results JSONL</b>Schema checked</div><span class="arrow" aria-hidden="true">→</span><div class="step end"><b>Leaderboard</b>Public score</div></div>
+<dl><dt>Bar</dt><dd>At least 85 on our own validation, because the 500-question test has roughly ±3.5 points of noise. This should be revisited once we know the real #1 score.</dd><dt>Decides</dt><dd>Whether we are ahead. I will check with you before submitting anything.</dd></dl>
+</article>
+</section>
+
+<section id="models">
+<h2>Models and tools</h2>
+<p>Only the verified items were confirmed in the repos I read. I have not yet checked that any of these models fit in the RTX 5090's 32 GB alongside the others.</p>
+<div class="scroll"><table>
+<thead><tr><th>Role</th><th>Candidate</th><th>Experiment</th><th>Runs on</th><th>Licence</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Text extraction</td><td><code>pypdfium2</code></td><td>1</td><td>CPU</td><td>Check before release</td><td>In the lab</td></tr>
+<tr><td>Keyword search</td><td>SQLite FTS5 (BM25)</td><td>2a onward</td><td>CPU</td><td>Public domain</td><td>In the lab</td></tr>
+<tr><td>OCR</td><td>Docling, PaddleOCR, olmOCR</td><td>3</td><td>To confirm</td><td>To confirm</td><td>From memory, unverified</td></tr>
+<tr><td>Reader</td><td>Qwen3-VL</td><td>4</td><td>GPU</td><td>To confirm</td><td>Named in leaderboard files; exact version to confirm</td></tr>
+<tr><td>Reader</td><td>GLM-4.6V</td><td>4</td><td>GPU</td><td>To confirm</td><td>Tagged open-weight on the leaderboard</td></tr>
+<tr><td>Judge</td><td><code>Qwen3-Reranker-0.6B</code></td><td>5a, 5b</td><td>GPU or CPU</td><td>Apache-2.0</td><td>Verified: supported by SAG2's repo</td></tr>
+<tr><td>Judge, not for commercial use</td><td><code>jina-reranker-v3.5</code></td><td>5a, optional</td><td>GPU or CPU</td><td>CC BY-NC 4.0</td><td>Verified: supported by SAG2's repo</td></tr>
+<tr><td>Expansion</td><td>SAG2 method</td><td>5b</td><td>CPU</td><td>MIT</td><td>Verified: code read in part</td></tr>
+<tr><td>Visual seed</td><td><code>MrLight/dse-qwen2-2b-mrl-v1</code></td><td>6a</td><td>GPU</td><td>To confirm</td><td>Verified: used by HEAVEN baseline</td></tr>
+<tr><td>Visual rerank</td><td><code>vidore/colqwen2.5-v0.2</code></td><td>6a</td><td>GPU</td><td>To confirm</td><td>Verified: used by HEAVEN baseline</td></tr>
+<tr><td>Learned sparse</td><td>SPLADE-style model</td><td>6b</td><td>GPU</td><td>To confirm</td><td>Specific model not chosen</td></tr>
+<tr><td>Model serving</td><td>vLLM</td><td>4 onward</td><td>GPU, probably via Linux</td><td>To confirm</td><td>Supported by MADQA's baseline; WSL distro still needed</td></tr>
+<tr><td>Scoring only</td><td>Gemini judge in MADQA's evaluator</td><td>4, 7</td><td>API</td><td>Not part of the system</td><td>Needs <code>GOOGLE_API_KEY</code> for local judged scores</td></tr>
+</tbody></table></div>
+<p>MADQA itself is CC BY-NC 4.0 and intended for non-commercial research.</p>
+</section>
+
+<section id="terms">
+<h2>Terms used here</h2>
+<div class="card"><dl>
+<dt>Agentic RAG</dt><dd>A system that searches, reads, and decides for itself whether to search again before answering.</dd>
+<dt>Open-weight</dt><dd>A model whose weights you can download and run yourself.</dd>
+<dt>BM25</dt><dd>Classic keyword search that ranks pages by shared words, favouring rare ones.</dd>
+<dt>Learned sparse</dt><dd>Keyword-style search where a model chooses and weights the terms, including related words.</dd>
+<dt>Visual search</dt><dd>Search that compares the question with page images, so it can find charts and scans.</dd>
+<dt>Reranker / judge</dt><dd>A model that rescores a shortlist more carefully than the first search could.</dd>
+<dt>Expansion</dt><dd>SAG2's idea: take terms from the best pages so far and search again, to reach linked evidence.</dd>
+<dt>Page recall@k</dt><dd>The share of the correct pages found within the top k results.</dd>
+<dt>Accuracy</dt><dd>The leaderboard's ranking metric: answers judged correct, using string matching plus an LLM judge.</dd>
+<dt>ANLS</dt><dd>How close the answer's text is to the accepted answer. Extra words lower it.</dd>
+<dt>Page F1</dt><dd>How well cited pages match the correct pages. It penalizes both missing and unnecessary citations.</dd>
+<dt>Kuiper</dt><dd>Whether accuracy depends on how much effort the agent spent on a question. Lower is better.</dd>
+</dl></div>
+</section>
+</main>
+</body>
+</html>

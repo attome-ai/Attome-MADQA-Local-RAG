@@ -1,0 +1,11 @@
+{
+  "name": "ctx400_rerank_neighbors",
+  "hypothesis": "Evidence is sometimes one page from where search or the label points, so showing pages next to the top 3 lets the reader see it.",
+  "pages": "hybrid_rapidocr_ctx400",
+  "pipeline": [
+    {"stage": "bm25", "top_k": 100},
+    {"stage": "rerank", "top_n": 100, "batch_size": 8, "max_tokens": 1500, "text_from": "hybrid_rapidocr"},
+    {"stage": "neighbors", "seeds": 3, "window": 1}
+  ],
+  "eval_k": [1, 3, 5, 9, 10, 20]
+}

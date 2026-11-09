@@ -1,0 +1,27 @@
+{
+ "purpose": "Questions whose top 9 pages differ between thin_ocr_llm_select and thin_ocr_visual (dev)",
+ "ids": {
+  "changed": [
+   "dev/11",
+   "dev/20",
+   "dev/23",
+   "dev/32",
+   "dev/46",
+   "dev/49",
+   "dev/50",
+   "dev/56",
+   "dev/65",
+   "dev/88",
+   "dev/91",
+   "dev/96",
+   "dev/104",
+   "dev/120",
+   "dev/127",
+   "dev/155",
+   "dev/165",
+   "dev/178",
+   "dev/185",
+   "dev/186"
+  ]
+ }
+}

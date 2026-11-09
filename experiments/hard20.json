@@ -1,0 +1,8 @@
+{
+  "purpose": "Fast iteration set: dev questions answered wrong on 2026-11-02 by Qwen3.5-9B, reranker, 5 pages, v2 prompt. Answers that only differ in format are excluded. Confirm any winner on the full split, because tuning on these alone overfits.",
+  "ids": {
+    "reader_wrong_with_correct_pages": ["dev/12", "dev/30", "dev/47", "dev/53", "dev/69", "dev/113", "dev/124", "dev/143"],
+    "evidence_missing_from_top5": ["dev/8", "dev/32", "dev/61", "dev/87", "dev/96", "dev/125", "dev/130", "dev/179"],
+    "right_alone_wrong_with_extra_pages": ["dev/98", "dev/111", "dev/119", "dev/129"]
+  }
+}

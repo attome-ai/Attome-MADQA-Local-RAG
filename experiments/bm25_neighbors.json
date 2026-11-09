@@ -1,0 +1,10 @@
+{
+  "name": "bm25_neighbors",
+  "hypothesis": "Adding pages next to the top 3 hits raises cross-page recall more than it hurts single-page recall.",
+  "pages": "pdf_text",
+  "pipeline": [
+    {"stage": "bm25", "top_k": 100},
+    {"stage": "neighbors", "seeds": 3, "window": 1}
+  ],
+  "eval_k": [1, 3, 5, 10, 20]
+}

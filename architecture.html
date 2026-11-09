@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MADQA system architecture</title>
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--ink:#22252a;--muted:#5d636c;--line:#dcdad3;--accent:#1f5f8b;
+--use-bg:#dcefe3;--use:#2f7d51;--test-bg:#fdeed2;--test:#b9771a;--store-bg:#e4edf5;--store:#3f719b;--code:#efede7}
+@media (prefers-color-scheme:dark){:root{--bg:#16181c;--card:#1f2228;--ink:#e8e8e6;--muted:#a6abb3;--line:#363a42;--accent:#7cb8e4;
+--use-bg:#1d3a2a;--use:#59b583;--test-bg:#46351a;--test:#e0a64e;--store-bg:#1f3242;--store:#7cb8e4;--code:#2b2f36}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1000px;margin:auto;padding:32px 20px 72px}
+h1{font-size:2rem;line-height:1.2;margin:0 0 8px}
+h2{font-size:1.4rem;margin:44px 0 8px}
+p{margin:0 0 12px}
+code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.88em;overflow-wrap:anywhere}
+.lead{color:var(--muted);font-size:1.06rem;max-width:760px}
+.note{border-left:4px solid var(--test);background:var(--card);padding:12px 16px;margin:16px 0;border-radius:0 6px 6px 0}
+.note p:last-child{margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:20px;margin:14px 0}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.flow{display:flex;flex-direction:column;align-items:stretch}
+.step{border:1px solid var(--use);background:var(--use-bg);border-radius:7px;padding:10px 14px;display:grid;grid-template-columns:minmax(150px,220px) 1fr auto;gap:4px 14px;align-items:baseline}
+.step b{font-size:.98rem}
+.step .what{font-size:.92rem}
+.step .time{font-size:.84rem;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.step.test{border-color:var(--test);background:var(--test-bg);border-style:dashed}
+.step.store{border-color:var(--store);background:var(--store-bg)}
+.down{text-align:center;color:var(--muted);line-height:1.5;font-size:1rem}
+.mini{display:inline-block;border:1px solid var(--use);background:var(--use-bg);border-radius:6px;padding:2px 10px;font-size:.84rem}
+.mini.test{border-color:var(--test);background:var(--test-bg);border-style:dashed}
+.mini.store{border-color:var(--store);background:var(--store-bg)}
+.tag{display:inline-block;font-size:.78rem;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:0 9px;white-space:nowrap;color:var(--muted)}
+.tag.run{color:var(--use);border-color:var(--use)}
+.tag.next{color:var(--test);border-color:var(--test)}
+.scroll{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:8px;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{white-space:nowrap}tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:640px){.step{grid-template-columns:1fr}.step .time{white-space:normal}th{white-space:normal}}
+</style>
+</head>
+<body>
+<main>
+<h1>MADQA system architecture</h1>
+<p class="lead">How our open-weight agentic RAG answers a question today, what each part does, and which parts are still being tested. Snapshot from 7 November 2026.</p>
+
+<div class="note"><p><strong>Best scores:</strong> <b>94.5</b> on the 200 dev questions (189 right, judged at a score of 0.5 or higher, with ColQwen; reruns land at 188 to 189, and dev has been used for tuning). The project log's stricter count was 91.0 before ColQwen. On 200 train questions never used for tuning (weighted to the test mix) the stack scored 92.0 in the log (185 right, 92.5, by the looser count) and ColQwen did not change that sample; over all 1,550 train questions ColQwen fixed 30 and broke 3 (about +1.7 points). Expect about 93 on the test mix. Qwen 3.8 only. (Adding Gemma 4 31B as a second reader reached 92.5 and 92.0 but isn't used.) Verify alone scores 88.0 on train. The judge is DeepSeek rather than the leaderboard's Gemini, and nothing has been submitted, so there's no official score yet. Targets: 94.4 best open-weight, 96.9 overall.</p></div>
+
+<div class="legend">
+<span class="mini">In use</span>
+<span class="mini test">Being tested</span>
+<span class="mini store">Stored once, reused</span>
+</div>
+
+<h2>1. Preparing the documents</h2>
+<p>This runs once, on all 799 available PDFs (18,619 pages). It only needs repeating if the text method changes.</p>
+<div class="card flow" role="img" aria-label="PDFs go through text extraction, GPU OCR for thin pages, and document context, then into a BM25 search index">
+<div class="step store"><b>799 PDFs</b><span class="what">One of the 800 can't be downloaded from its source</span><span class="time"></span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>Text extraction</b><span class="what">Embedded PDF text, using <code>pypdfium2</code></span><span class="time">Fast</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>OCR on thin pages</b><span class="what">RapidOCR on the GPU, for pages under 200 characters</span><span class="time">About 0.4 s/page</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>Document context</b><span class="what">Adds each document's opening 400 characters to its pages, for search only. An idea from SAG 1</span><span class="time">Seconds</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step store"><b>Search index</b><span class="what">SQLite FTS5 (BM25), plus cached reranker scores</span><span class="time"></span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step store"><b>Visual page index</b><span class="what">ColQwen2.5 turns every page image into vectors (18,619 pages, 3.4 GB, embedded once in about 40 minutes). Finds pages whose text layer or OCR lacks the words</span><span class="time">Once</span></div>
+</div>
+
+<h2>2. Answering a question</h2>
+<p>Times are per question with 8 running at once, so most of the total is reading.</p>
+<div class="card flow" role="img" aria-label="A question passes through planning, BM25 search, reranking, LLM page selection, blending, neighbouring pages, reading and verification to produce an answer with citations">
+<div class="step store"><b>Question</b><span class="what">From the benchmark</span><span class="time"></span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step test"><b>Plan the searches (agent)</b><span class="what">Splits comparisons into one search per item. Raised cross-document from 69.6 to 77.8 on train</span><span class="time">Under test</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>BM25 search</b><span class="what">Top 100 pages from the enriched text. Finds about 95–97% of correct pages</span><span class="time">0.02 s</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>Reranker</b><span class="what"><code>Qwen3-Reranker-0.6B</code> scores the 100 pages on their plain text</span><span class="time">About 1.3 s</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>LLM page selection</b><span class="what">Qwen 3.8 picks evidence pages from the top 20, using OCR text. An idea from SAG 1</span><span class="time">2.4 s</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>ColQwen visual page</b><span class="what">ColQwen's top page for the question replaces one of the reader's last slots, only when the text search missed it (changes the pages for about 9% of questions). Recall of the 9 pages 92.0 to 95.6 on train and 93.6 to 95.8 on dev</span><span class="time">About 1 s</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>Neighbouring pages</b><span class="what">Top 3 pages plus the pages either side, up to 9 images</span><span class="time">Tiny</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>Render page images</b><span class="what">2,048 pixels on the long side, labelled with file and page number</span><span class="time">About 1 s</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>Reader</b><span class="what"><code>Qwen3.8-27B-NVFP4</code> on vLLM with prompt v3. Reads the images and cites pages. Empty replies usually mean a search miss</span><span class="time">About 40 s</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step test"><b>Search again (agent)</b><span class="what">If evidence is missing, tries a different search, keeping notes on confirmed facts. Up to 3 rounds</span><span class="time">Under test</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>Verify and fix</b><span class="what">Re-reads the pages, quotes the evidence, corrects the answer. 86.5 to 87.5</span><span class="time">About +40 s</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>Two more methods, in parallel</b><span class="what">Evidence workspace (a fact table, then the answer) and the agent (planned searches, retry). Alone they don't beat verify (88.0 and 85.0), but they get different questions right</span><span class="time">About +45 s and +2 min</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>Adjudicator</b><span class="what">Only when the methods disagree (40 of 200): reads every page they cited and picks or corrects the answer. Retries answer-first if a reply runs away. 87.5 to 91.0, none lost</span><span class="time">About 3 s/question overall</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step"><b>Units</b><span class="what">Number answers re-read on their cited pages to restore unit and scale ("millions of Canadian dollars", "MHz"). The digits must stay identical. Train 87.0 to 88.0, nothing lost</span><span class="time">0.3 s</span></div>
+<div class="down" aria-hidden="true">↓</div>
+<div class="step store"><b>Answer + citations</b><span class="what">One row per question in the leaderboard's format, validated before writing</span><span class="time"></span></div>
+</div>
+
+<h2>3. Testing, for speed</h2>
+<div class="card flow">
+<div class="step test"><b>Read in stages</b><span class="what">A fast read of the top 3 pages at 1,568 pixels, with only unsure answers going on to the full read. About 4x faster, but lost 3.5 points because the model is overconfident. Parked until routing by question type is ready</span><span class="time">Parked</span></div>
+</div>
+
+<h2>4. Models and tools</h2>
+<div class="scroll"><table>
+<thead><tr><th>Role</th><th>Model or tool</th><th>Runs on</th><th>Licence</th></tr></thead>
+<tbody>
+<tr><td>Reader, page selection, planning</td><td><code>RadixArk/Qwen3.8-27B-NVFP4</code></td><td>vLLM in Docker, GPU, about 23–30 GB</td><td>Apache-2.0</td></tr>
+<tr><td>Reranker</td><td><code>Qwen3-Reranker-0.6B</code></td><td>Docker, GPU</td><td>Apache-2.0</td></tr>
+<tr><td>OCR</td><td>RapidOCR with ONNX Runtime</td><td>Docker, GPU</td><td>Not yet confirmed</td></tr>
+<tr><td>Keyword search</td><td>SQLite FTS5 (BM25)</td><td>CPU</td><td>Public domain</td></tr>
+<tr><td>Scoring only, not part of the system</td><td><code>deepseek/deepseek-v4.1-flash</code> through Command Code, using MADQA's judge prompt</td><td>Remote API</td><td>n/a</td></tr>
+<tr><td>Visual search</td><td><code>vidore/colqwen2.5-v0.2</code> (about 7 GB), MaxSim over page vectors</td><td>Docker, GPU for embedding and search (not at the same time as the reader)</td><td>Not yet confirmed</td></tr>
+<tr><td>JEV alternative, waiting to be tested</td><td>Kev-4B, 16-bit</td><td>Docker, GPU</td><td>Apache-2.0</td></tr>
+</tbody></table></div>
+<p>Hardware: one RTX 5090 with 32 GB, which also drives the desktop. Fixed memory budget: reader 0.82 (26.1 GiB), reranker capped at 1.9 GiB, desktop about 1.9 GiB. Windows starts spilling GPU memory into system RAM at about 30.9 GiB, which stalls everything, so a watchdog stops GPU jobs if that starts.</p>
+
+<h2>5. How each part earned its place</h2>
+<p>Judged end-to-end scores on 200 dev questions, unless noted. These are within the margin of about ±5 points individually.</p>
+<div class="scroll"><table>
+<thead><tr><th>Added</th><th class="n">Before</th><th class="n">After</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>Qwen 3.8 replacing Qwen3.5-9B</td><td class="n">76.0</td><td class="n">79.0</td><td></td></tr>
+<tr><td>Neighbouring pages</td><td class="n">79.0</td><td class="n">83.0</td><td>About half the speed</td></tr>
+<tr><td>OCR on thin pages</td><td class="n">83.0</td><td class="n">84.0</td><td>Page F1 80.92 to 83.44</td></tr>
+<tr><td>Labels, prompt v3 and 2,048 pixels</td><td class="n">84.0</td><td class="n">86.5</td><td>Half the speed</td></tr>
+<tr><td>LLM page selection</td><td class="n">86.5</td><td class="n">86.5</td><td>Page F1 84.17 to 86.16</td></tr>
+<tr><td>Verify and fix</td><td class="n">86.5</td><td class="n">87.5</td><td>3 gained, 1 lost</td></tr>
+<tr><td>Adjudicator over verify, workspace and agent</td><td class="n">87.5</td><td class="n">90.5</td><td>6 gained, 0 lost, p = 0.031; Page F1 86.16 to 87.41</td></tr>
+<tr><td>Adjudicator retry and salvage</td><td class="n">90.5</td><td class="n">91.0</td><td>Fixed a reply stuck repeating dot leaders</td></tr>
+<tr><td>Units step (train, unseen)</td><td class="n">87.0</td><td class="n">88.0</td><td>Verify + units; 2 gained, 0 lost</td></tr>
+<tr><td>Full system on train (unseen)</td><td class="n">88.0</td><td class="n">92.0</td><td>10 gained, 2 lost, p = 0.039</td></tr>
+<tr><td>ColQwen visual page, dev (full stack)</td><td class="n">187</td><td class="n">189</td><td>Of 200 right; 2 gained, 0 lost</td></tr>
+<tr><td>ColQwen visual page, train (full stack)</td><td class="n">87</td><td class="n">114</td><td>Of the 142 questions whose pages changed; 30 gained, 3 lost, about +1.7 points over 1,550</td></tr>
+<tr><td>Gemma 4 31B as a fourth candidate (not used: Qwen only)</td><td class="n">92.0</td><td class="n">92.5</td><td>Train; dev 91.0 to 92.0 with nothing lost</td></tr>
+</tbody></table></div>
+
+<h2>6. Where points are still lost</h2>
+<p>From the train check, weighted to the test's mix of question types.</p>
+<div class="scroll"><table>
+<thead><tr><th>Question type</th><th class="n">Share of test</th><th class="n">Judged</th><th class="n">Points lost</th></tr></thead>
+<tbody>
+<tr><td>Single-page</td><td class="n">73%</td><td class="n">91.0</td><td class="n">About 6.6</td></tr>
+<tr><td>Cross-page</td><td class="n">17%</td><td class="n">73.5</td><td class="n">About 4.5</td></tr>
+<tr><td>Cross-document</td><td class="n">10%</td><td class="n">69.6</td><td class="n">About 3.1</td></tr>
+</tbody></table></div>
+<p>The full history of tests, including what was dropped, is in <code>EXPERIMENT_LOG.md</code>.</p>
+<h3 style="margin:22px 0 4px;font-size:1.05rem">Tried since the last snapshot and not kept</h3>
+<div class="scroll"><table><thead><tr><th>Test</th><th>Result on 200 dev</th><th>Why not</th></tr></thead><tbody>
+<tr><td>Deep read of whole documents for list answers</td><td>187 to 175; with a question-aware item check 189 to 183</td><td>Fixes 3 incomplete lists (dev/18, 23, 56) but adds wrong items to lists that were complete, and the check cannot tell them apart</td></tr>
+<tr><td>Score-and-pick between candidates</td><td>No gain</td><td>The adjudicator already picks better</td></tr>
+<tr><td>ColQwen inside the agent's search</td><td>1 of 11 hard questions fixed</td><td>About 60 s per search on the CPU, because the GPU is full of the reader</td></tr>
+<tr><td>More ColQwen pages (2 pages, top 3)</td><td>Recall up at most 0.8</td><td>Changes the pages for 600 to 960 of 1,550 train questions, each a chance to break a right answer</td></tr>
+<tr><td>Three sampled reads as extra adjudicator candidates</td><td>188 vs 188</td><td>Gained 2, lost 2; the adjudicator alone moves the score by about 1 between reruns</td></tr>
+</tbody></table></div>
+<p>What is left are hard cases: partial lists, a misread digit, aggregation across documents. A stronger reader would help most, which the Qwen-only decision rules out.</p>
+
+<h2>7. What we're going to test</h2>
+<p>Each test changes one thing, on the hard questions first, then all 200, then train. A change stays only if it fixes questions without breaking others. Full details are in <code>EXPERIMENT_LOG.md</code>.</p>
+<h3 style="margin:22px 0 4px;font-size:1.05rem">Running now</h3>
+<div class="scroll"><table><thead><tr><th>ID</th><th>Test</th><th>Targets</th><th>Pass if</th><th>Status</th></tr></thead><tbody>
+<tr><td>T1</td><td>Staged read: fast read first, full read only if unsure</td><td>Speed</td><td>About half the time, losing under 1 point</td><td><span class="tag">Failed: -3.5 points</span></td></tr>
+<tr><td>T2</td><td>Verify and fix, without the blend, on all 200</td><td>Reading</td><td>Above 87.0, no real harm</td><td><span class="tag">Kept: 87.5</span></td></tr>
+<tr><td>T30</td><td>Adjudicate when methods disagree</td><td>Different methods fix different questions</td><td>Beats any single method, holds on 200</td><td><span class="tag">Kept: 91.0</span></td></tr>
+<tr><td>T3</td><td>Confirm the adjudicated stack on 200 train questions at the test mix</td><td>Overfitting</td><td>Beats verify on train too</td><td><span class="tag">Done: 92.0 on train</span></td></tr>
+</tbody></table></div>
+<h3 style="margin:22px 0 4px;font-size:1.05rem">Reading: the biggest limit</h3>
+<div class="scroll"><table><thead><tr><th>ID</th><th>Test</th><th>Targets</th><th>Pass if</th><th>Status</th></tr></thead><tbody>
+<tr><td>T4</td><td>Specialized agents by question type</td><td>Format and reasoning errors</td><td>Fixes several hard leftovers</td><td><span class="tag">Router: 2 of 26 alone</span></td></tr>
+<tr><td>T5</td><td>Evidence workspace: a fact table with sources, then answer</td><td>Wrong rows, comparisons</td><td>Fixes hard table and comparison questions</td><td><span class="tag">Used by the adjudicator</span></td></tr>
+<tr><td>T6</td><td>Qwen 3.8 with thinking when unsure</td><td>Hard reasoning</td><td>Fixes what verify misses</td><td><span class="tag">Failed in the adjudicator: -2.0</span></td></tr>
+<tr><td>T7</td><td>Zoom: crop and re-read regions</td><td>Wrong rows, misread characters</td><td>Fixes character and row errors</td><td><span class="tag ">Planned</span></td></tr>
+<tr><td>T8</td><td>Evidence-first: judge pages alone, skip irrelevant ones</td><td>Distractors, speed</td><td>Better answers or fewer images</td><td><span class="tag ">Planned</span></td></tr>
+<tr><td>T9</td><td>Images at about 2,500 pixels</td><td>Small text</td><td>Beats 2,048</td><td><span class="tag ">Idea</span></td></tr>
+<tr><td>T10</td><td>Vote across open models</td><td>Random errors</td><td>Beats the best single model</td><td><span class="tag">Sampled reads as extra candidates: 188 vs 188</span></td></tr>
+<tr><td>T11</td><td>Train Qwen on the 1,550 train questions</td><td>Reading overall</td><td>Beats the base model on unseen questions</td><td><span class="tag ">Idea</span></td></tr>
+</tbody></table></div>
+<h3 style="margin:22px 0 4px;font-size:1.05rem">Search and evidence</h3>
+<div class="scroll"><table><thead><tr><th>ID</th><th>Test</th><th>Targets</th><th>Pass if</th><th>Status</th></tr></thead><tbody>
+<tr><td>T12</td><td>Agent with retry on empty answers</td><td>5 hard questions with no correct page shown</td><td>Recovers several</td><td><span class="tag">Used by the adjudicator</span></td></tr>
+<tr><td>T13</td><td>Use the agent only with 2+ planned searches</td><td>Cross-document</td><td>Keeps 77.8, single-page unharmed</td><td><span class="tag">Not adopted</span></td></tr>
+<tr><td>T14</td><td>Read more of the document for lists and counts</td><td>Partly shown evidence, cross-page</td><td>Cross-page above 73.5</td><td><span class="tag">Failed: changed 0 of 9</span></td></tr>
+<tr><td>T15</td><td>Choose the number of pages per question</td><td>Long lists, speed</td><td>Same accuracy or better, fewer images</td><td><span class="tag ">Planned</span></td></tr>
+<tr><td>T16</td><td>Better OCR: GLM-OCR</td><td>Search text</td><td>Finds more evidence</td><td><span class="tag ">Planned</span></td></tr>
+<tr><td>T17</td><td>Layout parsing: MinerU</td><td>Table structure</td><td>Better extraction than today</td><td><span class="tag ">Planned</span></td></tr>
+<tr><td>T18</td><td>Visual search: ColQwen</td><td>Pages keywords miss</td><td>Finds new evidence, and answers improve</td><td><span class="tag">Kept: dev +2/-0, train +30/-3</span></td></tr>
+<tr><td>T19</td><td>Doc2query: generated questions in search text</td><td>Missing evidence</td><td>Recovers hard questions</td><td><span class="tag ">Planned</span></td></tr>
+<tr><td>T20</td><td>Page events and entities with links (SAG 1)</td><td>Multi-step search</td><td>Recovers hard questions</td><td><span class="tag ">Planned</span></td></tr>
+<tr><td>T21</td><td>Proper SAG2 expansion</td><td>Multi-step search</td><td>Beats the simple version</td><td><span class="tag ">Planned</span></td></tr>
+<tr><td>T22</td><td>Navigate documents by structure (PageIndex)</td><td>Right document, wrong page</td><td>Fixes those misses</td><td><span class="tag ">Idea</span></td></tr>
+<tr><td>T23</td><td>Kev-4B vs current reranker</td><td>Ranking</td><td>Better answers, not just recall</td><td><span class="tag ">Planned</span></td></tr>
+<tr><td>T24</td><td>Check if document context still helps</td><td>Simplify</td><td>Remove it if no effect</td><td><span class="tag ">Idea</span></td></tr>
+</tbody></table></div>
+<h3 style="margin:22px 0 4px;font-size:1.05rem">Automation, speed and submission</h3>
+<div class="scroll"><table><thead><tr><th>ID</th><th>Test</th><th>Targets</th><th>Pass if</th><th>Status</th></tr></thead><tbody>
+<tr><td>T25</td><td>LLM auto-tuning of agents</td><td>Everything</td><td>Beats hand-written agents on unseen questions</td><td><span class="tag ">Planned</span></td></tr>
+<tr><td>T26</td><td>Generated questions for scarce types</td><td>Tuning data</td><td>Helps T25</td><td><span class="tag ">Idea</span></td></tr>
+<tr><td>T27</td><td>Trim blank page margins</td><td>Speed</td><td>Same accuracy, fewer tokens</td><td><span class="tag ">Idea</span></td></tr>
+<tr><td>T28</td><td>All winners together, on 200 then train</td><td>Overlap between parts</td><td>Beats the best single setup</td><td><span class="tag ">Planned</span></td></tr>
+<tr><td>T29</td><td>Test run and leaderboard submission (needs your approval)</td><td>Real score</td><td>Valid file, official number</td><td><span class="tag ">Planned</span></td></tr>
+</tbody></table></div>
+<h3 style="margin:22px 0 4px;font-size:1.05rem">Decided against</h3>
+<p>BM25 blend, BM25 as a fourth candidate, thinking in the adjudicator, maths in code as built, thinking only on disagreements, calibrated abstention, GraphRAG, extra benchmarks, correcting labels, and Haiku.</p>
+</main>
+</body>
+</html>

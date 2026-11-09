@@ -1,0 +1,37 @@
+{
+ "purpose": "Dev questions the best stack (86.5) still gets wrong when judged, without the known bad labels dev/118 and dev/198.",
+ "ids": {
+  "single": [
+   "dev/12",
+   "dev/36",
+   "dev/57",
+   "dev/87",
+   "dev/98",
+   "dev/104",
+   "dev/117",
+   "dev/119",
+   "dev/120",
+   "dev/127",
+   "dev/171",
+   "dev/178"
+  ],
+  "cross_page": [
+   "dev/3",
+   "dev/18",
+   "dev/23",
+   "dev/44",
+   "dev/56",
+   "dev/85",
+   "dev/130"
+  ],
+  "cross_doc": [
+   "dev/10",
+   "dev/15",
+   "dev/69",
+   "dev/74",
+   "dev/96",
+   "dev/143",
+   "dev/155"
+  ]
+ }
+}

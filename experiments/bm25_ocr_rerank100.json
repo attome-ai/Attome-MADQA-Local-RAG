@@ -1,0 +1,10 @@
+{
+  "name": "bm25_ocr_rerank100",
+  "hypothesis": "Reranking the top 100 BM25 pages recovers evidence that a top-30 rerank never sees, enough to justify the cost.",
+  "pages": "hybrid_rapidocr",
+  "pipeline": [
+    {"stage": "bm25", "top_k": 100},
+    {"stage": "rerank", "top_n": 100, "batch_size": 8, "max_tokens": 1500}
+  ],
+  "eval_k": [1, 3, 5, 10, 20]
+}

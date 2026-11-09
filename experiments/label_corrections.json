@@ -1,0 +1,57 @@
+{
+ "purpose": "Dev label corrections (added as extra accepted variants; originals kept). Original files: data/questions/{dev,train}.original.jsonl. Only affects local dev scoring, not the leaderboard.",
+ "date": "2026-11-03",
+ "fixes": {
+  "dev/171": {
+   "added_variant": [
+    "rnorton@camken.com"
+   ],
+   "why": "Page reads rnorton@camken.com for Reginald Norton; label 'rmorton' misreads rn as m"
+  },
+  "dev/12": {
+   "added_variant": [
+    "Ohio",
+    "Michigan",
+    "Indiana",
+    "Virginia",
+    "Kentucky",
+    "West Virginia",
+    "Oklahoma",
+    "Louisiana",
+    "Texas",
+    "Arkansas",
+    "Tennessee"
+   ],
+   "why": "State(s) of Operation lists 11 states over two lines; label kept only the wrapped 'Tennessee'"
+  },
+  "dev/198": {
+   "added_variant": [
+    "$ 13,417,108"
+   ],
+   "why": "Label '$ 3,417,108' drops the leading 1; every method reads $13,417,108"
+  },
+  "dev/3": {
+   "added_variant": [
+    "MANAGEMENT AND PERSONNEL",
+    "PREVENTING CONTAMINATION FROM HANDS",
+    "FOOD SOURCE",
+    "FOOD PROTECTED FROM CONTAMINATION",
+    "PHFs TIME/TEMPERATURE CONTROLS"
+   ],
+   "why": "Question asks for the Foodborne Illness Risk Factors categories (page 1); label also adds the 4 Good Retail Practices sections from page 2"
+  },
+  "train/153": {
+   "added_variant": [
+    "more than 1,300"
+   ],
+   "why": "Page says 'operating more than 1,300 stores'; our exact quote was judged wrong against '1,300'"
+  },
+  "dev/117": {
+   "added_variant": [
+    "10/30/2014",
+    "11/03/2014"
+   ],
+   "why": "The docket lists two letters from Robert Allensworth, filed 10/30/2014 and 11/03/2014; question is ambiguous"
+  }
+ }
+}

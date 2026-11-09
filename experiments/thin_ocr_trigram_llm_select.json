@@ -1,0 +1,13 @@
+{
+  "name": "thin_ocr_trigram_llm_select",
+  "hypothesis": "OCR often runs words together (dev/120: 'TeddDrucK'), so word BM25 can't match them. Adding the top 20 substring (trigram) matches to the pool raised candidate recall 97.0 to 98.25 on dev and 95.16 to 95.69 on train. The reranker and LLM selection then have to lift them.",
+  "pages": "hybrid_t200_ctx400",
+  "pipeline": [
+    {"stage": "bm25", "top_k": 100},
+    {"stage": "trigram", "top_k": 20},
+    {"stage": "rerank", "top_n": 120, "batch_size": 8, "max_tokens": 1500, "text_from": "hybrid_t200"},
+    {"stage": "llm_select", "top_n": 20, "chars": 1200, "text_from": "hybrid_t200"},
+    {"stage": "neighbors", "seeds": 3, "window": 1}
+  ],
+  "eval_k": [1, 3, 5, 9, 10, 20]
+}

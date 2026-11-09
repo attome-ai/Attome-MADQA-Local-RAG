@@ -1,0 +1,12 @@
+{
+  "name": "thin_ocr_llm_select",
+  "hypothesis": "SAG's ablation found LLM final selection far ahead of a reranker (R@5 80.36 vs 67.11 on MuSiQue). Qwen 3.8 choosing from the reranked top 20 should put evidence higher.",
+  "pages": "hybrid_t200_ctx400",
+  "pipeline": [
+    {"stage": "bm25", "top_k": 100},
+    {"stage": "rerank", "top_n": 100, "batch_size": 8, "max_tokens": 1500, "text_from": "hybrid_t200"},
+    {"stage": "llm_select", "top_n": 20, "chars": 1200, "text_from": "hybrid_t200"},
+    {"stage": "neighbors", "seeds": 3, "window": 1}
+  ],
+  "eval_k": [1, 3, 5, 9, 10, 20]
+}

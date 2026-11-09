@@ -1,0 +1,22 @@
+[project]
+name = "madqa-lab"
+version = "0.1.0"
+description = "Experiment lab for an open-weight agentic RAG on MADQA"
+requires-python = ">=3.11"
+dependencies = [
+    "anls-star>=1.0.1",
+    "datasets>=2.14",
+    "huggingface_hub>=0.34",
+    "pillow>=13.0.0",
+    "pypdfium2>=4.30",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
