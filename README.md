@@ -11,7 +11,7 @@ Answers are scored by the judge; a question counts as right at a judged score of
 
 | Set | Questions | Right | Accuracy | Note |
 |---|---|---|---|---|
-| Dev | 200 | 189 | **94.5%** | Tuned on, so optimistic (noise is about ±5) |
+| Dev | 200 | 191 | **95.5%** | Tuned on, so optimistic (noise is about ±5). 189 before the page ranker |
 | Train, 300 untuned | 300 | 285 | **95.0%** | Held out from all tuning |
 | Train, mix of 200 | 200 | 185 | **92.5%** | Untuned, test-like mix |
 | Train, 50 list questions | 50 | 47 | **94.0%** | Untuned, the hardest type |
@@ -74,7 +74,7 @@ document context, trained on the gold pages of train with out-of-fold scores.
 | Train single-page, all gold pages shown (5-fold) | 1282 / 1313 | 1297 / 1313 |
 | Plain read on 207 untuned train questions | 168 right | 185 right (+24 / -7) |
 
-Full pipeline (read, verify, workspace, adjudicate, units), only on questions where the ranker changes which gold pages are shown: dev 3 to 4 right of 9 (+1 / -0); untuned train 34 to 41 right of 52 (+11 / -4). Worth about +0.5 point overall, so it is kept. It is not yet exported for the test split.
+Full pipeline (read, verify, workspace, adjudicate, units), only on questions where the ranker changes which gold pages are shown: dev 4 to 5 right of 9 (+2 / -0); untuned train 35 to 44 right of 52 (+11 / -2). Worth about +0.5 to 0.7 point overall, so it is kept. It is not yet exported for the test split.
 
 ## Layout
 

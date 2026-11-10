@@ -379,3 +379,9 @@ visual search.
 ## 2026-11-09 Ranker: widen candidates to every page of the top 2 documents
 - Out-of-fold train: multi 197 -> 198 of 237, single 1294 -> 1290 of 1313; dev multi 32 -> 31 of 37. The extra candidates add noise about as often as they add gold pages. Not adopted (WIDEN = 0 in lab/pagerank.py).
 - Where the v2 ranker still misses on train (multi, 40 of 237): 27 have every gold page in the candidate lists but not in the chosen 9; 13 have a gold page in no list (11 of those with the right document seen).
+
+## 2026-11-10 Page ranker v2 (text-match features), full pipeline on coverage-changed questions
+- Dev, 9 questions: right 4 -> 5-ish, precisely base 4 / new 5 of 9 (gained dev/15 and dev/74, lost none). Dev would be 191/200.
+- Untuned train, 52 questions (out-of-fold ranker): right 35 -> 44 (+11 / -2). Gained train/337, 414, 760, 969, 1210, 1219, 1223, 1324, 1373, 1374, 1523; lost train/670, 726. Version 1 was +11 / -4 on a similar set.
+- The losses are reading errors with full evidence shown: train/670 had 4 of 4 gold pages in the 9 and answered one coach of several; train/726 had 2 of 2. The v1 losses train/499 (extra name added) and train/656 (wrong company) also had every gold page. So the ranker is not the cause; no general fix identified.
+- Adopted: v2 ranker (lab/pagerank.py, WIDEN = 0). Still to do for test: export its ranking for the test split, only when the user approves a test run.
